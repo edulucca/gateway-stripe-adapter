@@ -1,0 +1,42 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: gateway-stripe-adapter
+  title: Adaptador de Pagamento (Stripe)
+  description: Serviço isolado responsável por receber webhooks da Stripe e normalizar os dados para o formato interno.
+  tags: [java, microservice, webhook]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:squad-billing
+  system: billing-gateway
+  providesApis:
+    - asyncapi-eventos-pagamento
+  dependsOn:
+    - resource:kafka-fila-pagamentos
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: asyncapi-eventos-pagamento
+  title: Eventos de Pagamento Processado
+  description: Tópico para notificar outros sistemas (como o core de Manutenção) de que um pagamento foi aprovado.
+  tags: [kafka, async, finance]
+spec:
+  type: asyncapi
+  lifecycle: production
+  owner: group:squad-billing
+  system: billing-gateway
+  definition: |
+    asyncapi: 2.0.0
+    info:
+      title: Payment Events
+      version: 1.0.0
+    channels:
+      payment.approved:
+        publish:
+          message:
+            payload:
+              type: object
